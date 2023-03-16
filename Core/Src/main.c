@@ -905,7 +905,7 @@ uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nT
 		delay1();
 		delay1();	//expect 10us
 
-		portCTRL->BSRR |= (1<<pinRSTACCL) | (1<<pinCFB1L);
+		portCTRL->BSRR |= (1<<pinRSTACCL) | (1<<pinCFB1L) | (1<<pinCFB2L);
 		//portTX->BSRR |= (1<<pinACCL);
 		do
 		{
@@ -1030,7 +1030,7 @@ uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nT
 //		HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_SET);
 
 		//=== RESET ACCUMULATOR ===
-		portCTRL->BSRR |= (1<<pinRSTACCH)| (1<<pinCFB1H);// | (1<<pinCFB1H) | (1<<pinCFB2H);	//ACCRST ON PB6
+		portCTRL->BSRR |= (1<<pinRSTACCH) | (1<<pinCFB1H) | (1<<pinCFB2H);	//ACCRST ON PB6
 
 		portMSTR->BSRR |= (1<<pinMSTRL);	//MSTR OFF PC6
 		//portCS->BSRR |= (1<<pinCS2L);	// SS2 OFF PB12
@@ -1076,7 +1076,7 @@ uint16_t Run_NoiseScans(int16_t* s16p_frame, uint8_t nAcc, uint8_t vreff, uint8_
 		delay1();
 		delay1();	//expect 10us
 
-		portCTRL->BSRR |= (1<<pinRSTACCL) | (1<<pinCFB1L);
+		portCTRL->BSRR |= (1<<pinRSTACCL) | (1<<pinCFB1L)| (1<<pinCFB2L);
 		//portTX->BSRR |= (1<<pinACCL);
 		do
 		{
@@ -1201,7 +1201,7 @@ uint16_t Run_NoiseScans(int16_t* s16p_frame, uint8_t nAcc, uint8_t vreff, uint8_
 //		HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_SET);
 
 		//=== RESET ACCUMULATOR ===
-		portCTRL->BSRR |= (1<<pinRSTACCH)| (1<<pinCFB1H);// | (1<<pinCFB1H) | (1<<pinCFB2H);	//ACCRST ON PB6
+		portCTRL->BSRR |= (1<<pinRSTACCH) | (1<<pinCFB1H) | (1<<pinCFB2H);	//ACCRST ON PB6
 
 
 		portMSTR->BSRR |= (1<<pinMSTRL);	//MSTR OFF PC6
@@ -1892,11 +1892,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if(GPIO_Pin == TX11_Pin)
   {
+	  __NVIC_DisableIRQ(EXTI15_10_IRQn);
 	  spi2_f = 0;
 	  GPIOB->BSRR |= (1<<24);
+	  __HAL_RCC_SPI2_FORCE_RESET();
+	  __HAL_RCC_SPI2_RELEASE_RESET();
 	  HAL_SPI_DeInit(&hspi2);
+	  __HAL_RCC_SPI1_FORCE_RESET();
+	  __HAL_RCC_SPI1_RELEASE_RESET();
 	  HAL_SPI_DeInit(&hspi1);
+	  __HAL_RCC_SPI4_FORCE_RESET();
+	  __HAL_RCC_SPI4_RELEASE_RESET();
 	  HAL_SPI_DeInit(&hspi4);
+	  __HAL_RCC_SPI6_FORCE_RESET();
+	  __HAL_RCC_SPI6_RELEASE_RESET();
 	  HAL_SPI_DeInit(&hspi6);
 	  HAL_NVIC_SystemReset();
   }
@@ -1945,18 +1954,18 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
 {
     if(hspi->Instance == SPI1)
     {
-    	temp_pData[0] = pData[0];
-    	temp_pData[1] = pData[1];
-    	temp_pData[2] = pData[2];
-    	temp_pData[3] = pData[3];
-    	temp_pData[4] = pData[4];
-    	temp_pData[5] = pData[5];
-    	temp_pData[6] = pData[6];
-    	temp_pData[7] = pData[7];
-    	temp_pData[8] = pData[8];
-    	temp_pData[9] = pData[9];
-    	temp_pData[10] = pData[10];
-    	temp_pData[11] = pData[11];
+//    	temp_pData[0] = pData[0];
+//    	temp_pData[1] = pData[1];
+//    	temp_pData[2] = pData[2];
+//    	temp_pData[3] = pData[3];
+//    	temp_pData[4] = pData[4];
+//    	temp_pData[5] = pData[5];
+//    	temp_pData[6] = pData[6];
+//    	temp_pData[7] = pData[7];
+//    	temp_pData[8] = pData[8];
+//    	temp_pData[9] = pData[9];
+//    	temp_pData[10] = pData[10];
+//    	temp_pData[11] = pData[11];
     	spi1_f = 1;
     	//Flush_Buffer((uint8_t*)pData, sizeof(pData));
 
@@ -1964,35 +1973,35 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef * hspi)
     if(hspi->Instance == SPI4)
     {
 
-    	temp_pData[0] = pData1[0];
-    	temp_pData[1] = pData1[1];
-    	temp_pData[2] = pData1[2];
-    	temp_pData[3] = pData1[3];
-    	temp_pData[4] = pData1[4];
-    	temp_pData[5] = pData1[5];
-    	temp_pData[6] = pData1[6];
-    	temp_pData[7] = pData1[7];
-    	temp_pData[8] = pData1[8];
-    	temp_pData[9] = pData1[9];
-    	temp_pData[10] = pData1[10];
-    	temp_pData[11] = pData1[11];
+//    	temp_pData[0] = pData1[0];
+//    	temp_pData[1] = pData1[1];
+//    	temp_pData[2] = pData1[2];
+//    	temp_pData[3] = pData1[3];
+//    	temp_pData[4] = pData1[4];
+//    	temp_pData[5] = pData1[5];
+//    	temp_pData[6] = pData1[6];
+//    	temp_pData[7] = pData1[7];
+//    	temp_pData[8] = pData1[8];
+//    	temp_pData[9] = pData1[9];
+//    	temp_pData[10] = pData1[10];
+//    	temp_pData[11] = pData1[11];
     	spi4_f = 1;
     }
     if(hspi->Instance == SPI6)
     {
 
-    	temp_pData[0] = pData2[0];
-    	temp_pData[1] = pData2[1];
-    	temp_pData[2] = pData2[2];
-    	temp_pData[3] = pData2[3];
-    	temp_pData[4] = pData2[4];
-    	temp_pData[5] = pData2[5];
-    	temp_pData[6] = pData2[6];
-    	temp_pData[7] = pData2[7];
-    	temp_pData[8] = pData2[8];
-    	temp_pData[9] = pData2[9];
-    	temp_pData[10] = pData2[10];
-    	temp_pData[11] = pData2[11];
+//    	temp_pData[0] = pData2[0];
+//    	temp_pData[1] = pData2[1];
+//    	temp_pData[2] = pData2[2];
+//    	temp_pData[3] = pData2[3];
+//    	temp_pData[4] = pData2[4];
+//    	temp_pData[5] = pData2[5];
+//    	temp_pData[6] = pData2[6];
+//    	temp_pData[7] = pData2[7];
+//    	temp_pData[8] = pData2[8];
+//    	temp_pData[9] = pData2[9];
+//    	temp_pData[10] = pData2[10];
+//    	temp_pData[11] = pData2[11];
     	spi6_f = 1;
     }
     if(hspi->Instance == SPI2)
