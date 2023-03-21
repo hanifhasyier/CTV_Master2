@@ -28,6 +28,10 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef struct {
+	void (*Mut_TX)(int ch);
+	void (*Noise_TX)(int ch);
+} sRun_t;
 
 /* USER CODE END PTD */
 
@@ -96,6 +100,7 @@ UART_HandleTypeDef huart3;
 DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
+
 //From GUI
 uint8_t run_f = 0,
 		Vref_f = 0,
@@ -130,6 +135,16 @@ sAfeReply_t AfeReply;
 
 char str_Frame[1731]={'*'}; //1+6*16*18+2 -> *+data+&+\n
 #define slave_addr (0x11<<1)
+
+void TxFs1(int ch);
+void TxFs2(int ch);
+void TxFs3(int ch);
+void TxFs4(int ch);
+
+void NTxFs1(int ch);
+void NTxFs2(int ch);
+void NTxFs3(int ch);
+void NTxFs4(int ch);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -144,6 +159,26 @@ static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART3_UART_Init(void);
 /* USER CODE BEGIN PFP */
+sRun_t Run[AFE_FREQ_CNT] = {
+		{
+				.Mut_TX = TxFs1,
+				.Noise_TX = NTxFs1,
+		},
+		{
+				.Mut_TX = TxFs2,
+				.Noise_TX = NTxFs2,
+		},
+		{
+				.Mut_TX = TxFs3,
+				.Noise_TX = NTxFs3,
+		},
+		{
+				.Mut_TX = TxFs4,
+				.Noise_TX = NTxFs4,
+		},
+
+};
+
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
@@ -247,7 +282,7 @@ void delay_AFE_Init1(void)
 	delay1();
 }
 
-void Tx100k(int ch)	//200kHz
+void TxFs4(int ch)	//200kHz
 {
 	uint8_t m=0,n=0,p=0,q=0;
 
@@ -305,85 +340,64 @@ void Tx100k(int ch)	//200kHz
 
 }
 
-void NTx100k(int ch)
+void NTxFs4(int ch)
 {
 	uint8_t m=0,n=0,p=0,q=0;
-		portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
-	//	portCTRL->BSRR |= (1<<pinCINJNL);
 
-		//WAITING DELAYYY
-		do
-		{
-			asm("NOP");
-		} while(q++<79);
+	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	portTX->BSRR |= (1<<pinTXL[ch]);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
 
+	do
+	{
+		asm("NOP");
+	} while(m++<13);
+	portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
 
+	//WAITING DELAYYY
+	do
+	{
 		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-
-
-		portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
-	//	portCTRL->BSRR |= (1<<pinCINJPH);
-		portTX->BSRR |= (1<<pinTXL[ch]);
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-	//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
-		do
-		{
-			asm("NOP");
-		} while(m++<13);
-		portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
-	//	portCTRL->BSRR |= (1<<pinCINJPL);
-
-		//WAITING DELAYYY
-		do
-		{
-			asm("NOP");
-		} while(p++<79);
+	} while(p++<45);
 
 
 
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-
-
-
-		portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
+	portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
 	//	portCTRL->BSRR |= (1<<pinCINJNH);
-		portTX->BSRR |= (1<<pinTXL[ch]);
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-		asm("NOP");
-	//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
-		do
-		{
-			asm("NOP");
-		} while(n++<3);
+	portTX->BSRR |= (1<<pinTXL[ch]);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
 
+	do
+	{
+		asm("NOP");
+	} while(n++<13);
+	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(q++<36);
 
 }
 
-void Tx500k(int ch)	//225k 300kHz
+void TxFs1(int ch)	//225k 300kHz
 {
 	uint8_t m=0,n=0,p=0,q=0;
 
@@ -441,48 +455,42 @@ void Tx500k(int ch)	//225k 300kHz
 
 }
 
-void NTx500k(int ch)
+void NTxFs1(int ch)
 {
-	uint8_t m=0,n=0;
-	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
-//	portCTRL->BSRR |= (1<<pinCINJNL);
-
-
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
+	uint8_t m=0,n=0,p=0,q=0;
 
 
 	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
-//	portCTRL->BSRR |= (1<<pinCINJPH);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
 	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
 
-//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
 	do
 	{
 		asm("NOP");
-	} while(m++<13);	//13
+	} while(m++<13);
 	portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
-//	portCTRL->BSRR |= (1<<pinCINJPL);
 
-
-
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(p++<24);
 
 
 
 	portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
-//	portCTRL->BSRR |= (1<<pinCINJNH);
+	//	portCTRL->BSRR |= (1<<pinCINJNH);
 	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
@@ -490,18 +498,22 @@ void NTx500k(int ch)
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
-	asm("NOP");
-	asm("NOP");
 
-//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
 	do
 	{
 		asm("NOP");
-	} while(n++<3);	//3
+	} while(n++<13);
+	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(q++<15);
 
 }
 
-void Tx400k(int ch)	//200k 266kHz
+void TxFs2(int ch)	//200k 266kHz
 {
 	uint8_t m=0,n=0,p=0,q=0;
 
@@ -559,72 +571,42 @@ void Tx400k(int ch)	//200k 266kHz
 
 }
 
-void NTx400k(int ch)
+void NTxFs2(int ch)
 {
 	uint8_t m=0,n=0,p=0,q=0;
-	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
-//	portCTRL->BSRR |= (1<<pinCINJNL);
-
-	//WAITING DELAYYY
-	do
-	{
-		asm("NOP");
-	} while(q++<4);
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-
-
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
 
 
 	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
-//	portCTRL->BSRR |= (1<<pinCINJPH);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
 	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
-	asm("NOP");
-//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
+
 	do
 	{
 		asm("NOP");
 	} while(m++<13);
 	portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
-//	portCTRL->BSRR |= (1<<pinCINJPL);
 
 	//WAITING DELAYYY
 	do
 	{
 		asm("NOP");
-	} while(p++<4);
-
-
-
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
+	} while(p++<28);
 
 
 
 	portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
-//	portCTRL->BSRR |= (1<<pinCINJNH);
+	//	portCTRL->BSRR |= (1<<pinCINJNH);
 	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
@@ -632,21 +614,23 @@ void NTx400k(int ch)
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
+
 	do
 	{
 		asm("NOP");
-	} while(n++<3);
+	} while(n++<13);
+	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(q++<19);
 
 
 }
 
-void Tx250k(int ch)	//175k 233kHz
+void TxFs3(int ch)	//175k 233kHz
 {
 	uint8_t m=0,n=0,p=0,q=0;
 
@@ -704,63 +688,41 @@ void Tx250k(int ch)	//175k 233kHz
 
 }
 
-void NTx250k(int ch)
+void NTxFs3(int ch)
 {
 	uint8_t m=0,n=0,p=0,q=0;
-	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
-//	portCTRL->BSRR |= (1<<pinCINJNL);
-
-	//WAITING DELAYYY
-	do
-	{
-		asm("NOP");
-	} while(q++<19);
-
-
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-
 
 	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
-//	portCTRL->BSRR |= (1<<pinCINJPH);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
 	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
-	asm("NOP");
-//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
+
 	do
 	{
 		asm("NOP");
 	} while(m++<13);
 	portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
-//	portCTRL->BSRR |= (1<<pinCINJPL);
 
 	//WAITING DELAYYY
 	do
 	{
 		asm("NOP");
-	} while(p++<19);
-
-
-
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
+	} while(p++<37);
 
 
 
 	portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
-//	portCTRL->BSRR |= (1<<pinCINJNH);
+	//	portCTRL->BSRR |= (1<<pinCINJNH);
 	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
@@ -768,42 +730,23 @@ void NTx250k(int ch)
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-	asm("NOP");
-//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
+
 	do
 	{
 		asm("NOP");
-	} while(n++<3);
+	} while(n++<13);
+	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(q++<28);
 
 
 }
 
 //NEW RUN SCAN PARENT
-void Run_TX(int freq, int ch)
-{
-	switch (freq)
-	{
-	case 0:	Tx500k(ch);	break;
-	case 1: Tx400k(ch); break;
-	case 2: Tx250k(ch); break;
-	default: Tx100k(ch);
-	}
-}
-
-void Run_NoiseTX(int freq, int ch)
-{
-	switch (freq)
-	{
-	case 0:	NTx500k(ch);	break;
-	case 1: NTx400k(ch);	break;
-	case 2: NTx250k(ch);	break;
-	default: NTx100k(ch);
-	}
-}
 
 //NEW Run scan 500khz 3 slave
 uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t vreff, uint8_t diff)
@@ -850,7 +793,8 @@ uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nT
 		//portTX->BSRR |= (1<<pinACCL);
 		do
 		{
-			Run_TX(freq,n+1);
+			Run[freq].Mut_TX(n+1);
+			//Run_TX(freq,n+1);
 			//portTX->BSRR |= (1<<pinACCL);
 		} while(m++ < nAcc-1);
 		portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
@@ -1055,7 +999,8 @@ uint16_t Run_NoiseScans(int16_t* s16p_frame, uint8_t nAcc, uint8_t vreff, uint8_
 		//portTX->BSRR |= (1<<pinACCL);
 		do
 		{
-			Run_NoiseTX(n, n+1);
+			Run[n].Noise_TX(n+1);
+			//Run_NoiseTX(n, n+1);
 			//portTX->BSRR |= (1<<pinACCL);
 		} while(m++ < nAcc-1);
 		portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
@@ -1519,9 +1464,8 @@ int main(void)
 		  printf("&\n");
 		  sprintf(str_Frame,"&\n");
 	  }
-#endif
 
-#if debug == 0
+#else
 	  // wait command from host
 	  spi2_f = 0;
 	  HAL_SPI_Receive_IT(&hspi2,
